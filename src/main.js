@@ -22,8 +22,8 @@ class PhysicalMesh {
 }
 
 class PhysicalSphere extends PhysicalMesh {
-    constructor(radius, material, mass = 0, position = new THREE.Vector3()) {
-        const sphereGeometry = new THREE.SphereGeometry(radius, 8, 8);
+    constructor(radius, material, mass = 0, position = new THREE.Vector3(), segments=8) {
+        const sphereGeometry = new THREE.SphereGeometry(radius, segments, segments);
         const mesh = new THREE.Mesh(sphereGeometry, material);
 
         const shape = new CANNON.Sphere(radius);
@@ -43,6 +43,7 @@ let camera, scene, renderer, controls;
 let world;
 
 let aminoAcids = [];
+let repulsiveSphere;
 
 init();
 animate();
@@ -68,20 +69,11 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     // Lights
-
     let hemilight = new THREE.HemisphereLight(0x808080, 0x606060);
     hemilight.intensity = 5;
-
     const light = new THREE.DirectionalLight(0xffffff);
     light.position.set(0, 6, 0);
     light.intensity = 6;
-    light.castShadow = true;
-    light.shadow.camera.top = 2;
-    light.shadow.camera.bottom = -2;
-    light.shadow.camera.right = 2;
-    light.shadow.camera.left = -2;
-    light.shadow.mapSize.set(2048, 2048);
-
     let defaultLight = new THREE.Group();
     defaultLight.add(hemilight);
     defaultLight.add(light);
@@ -90,6 +82,8 @@ function init() {
     window.addEventListener("resize", onWindowResize);
 
     controls = new TrackballControls(camera, renderer.domElement);
+
+    world = new CANNON.World();
 
     const material = new THREE.MeshStandardMaterial({
         color: 0xffffff,
@@ -136,14 +130,20 @@ function init() {
                 });
 
                 // Compute the force after each step
-                world.addEventListener("postStep", (event) => {
+                world.addEventListener("postStep", () => {
                     spring.applyForce();
                 });
             }
         }
+
     });
 
-    world = new CANNON.World();
+    const redMaterial = new THREE.MeshStandardMaterial({
+        color: 0xff0000,
+    });
+    repulsiveSphere = new PhysicalSphere(1, redMaterial, 1, new THREE.Vector3());
+    scene.add(repulsiveSphere.mesh);
+    world.addBody(repulsiveSphere.body);
 }
 
 function onWindowResize() {
@@ -158,9 +158,17 @@ function animate() {
     // Step the physics world
     world.fixedStep();
 
+    let com = new THREE.Vector3();
     for (const e of aminoAcids) {
         e.update();
+
+        com.add(e.mesh.position);
     }
+    com.divideScalar(aminoAcids.length);
+
+    repulsiveSphere.body.position.copy(com);
+    repulsiveSphere.body.position.x += Math.sin(performance.now()/2000) * 5;
+    repulsiveSphere.update()
 
     controls.update();
 
