@@ -5,6 +5,7 @@ import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFa
 import { XRHandModelFactory } from "three/addons/webxr/XRHandModelFactory.js";
 import * as CANNON from "../lib/cannon-es.js";
 import { loadLocal } from "./file.js";
+import { loadPDBFromId } from "./pdb_loader.js"
 
 class PhysicalMesh {
     constructor(mesh, body, position = new THREE.Vector3()) {
@@ -199,20 +200,24 @@ function init() {
     container = new THREE.Group();
     scene.add(container);
 
+
     const scale = 1/10;
-    loadLocal("resources/8p1a.oxview", scale).then((systems) => {
+
+    loadPDBFromId(
+        "8p1a"
+        //"8qql"
+    ).then(systems=>{
         aminoAcids = [];
-        for (const system of systems) {
-            for (const strand of system.strands) {
-                for (const e of strand.monomers) {
-                    const sphere = new PhysicalSphere(
-                        0.02, material, 1, e.position
-                    );
-                    sphere.strandId = strand.id; // TODO: save in new class
-                    container.add(sphere.mesh);
-                    world.addBody(sphere.body);
-                    aminoAcids.push(sphere);
-                }
+        for (const chain of systems) {
+            for (const e of chain.residues) {
+                const sphere = new PhysicalSphere(
+                    0.02, material, 1,
+                    e.position.clone().multiplyScalar(scale)
+                );
+                sphere.strandId = chain.id; // TODO: save in new class
+                container.add(sphere.mesh);
+                world.addBody(sphere.body);
+                aminoAcids.push(sphere);
             }
         }
         for (let i = 0; i < aminoAcids.length; i++) {

@@ -20,43 +20,6 @@ class System {
         }
         return v.divideScalar(this.getSize());
     }
-
-    placeInBox() {
-        const origin = this.box.clone().divideScalar(2);
-        const centreOfMass = this.getCenterOfMass();
-
-        for (const m of this.elements.values()) {
-            m.position.add(centreOfMass).add(origin);
-        }
-    }
-
-    createViewMesh() {
-        this.instancedMesh = new THREE.InstancedMesh(
-            monomerGeometry,
-            monomerMaterial,
-            this.getSize(),
-        );
-
-        this.instancedMesh.castShadow = true;
-        this.instancedMesh.receiveShadow = true;
-
-        // TODO: use dummy Matrix4 and makeTranslation() instead?
-        const dummy = new THREE.Object3D();
-        const strandColorsLen = strandColors.length;
-        for (const strand of this.strands) {
-            for (const m of strand.monomers) {
-                const p = m.getBackbonePos();
-                dummy.position.copy(p);
-                dummy.updateMatrix();
-                this.instancedMesh.setMatrixAt(m.id, dummy.matrix);
-                this.instancedMesh.setColorAt(
-                    m.id,
-                    strandColors[strand.id % strandColorsLen],
-                );
-            }
-        }
-        this.instancedMesh.instanceMatrix.needsUpdate = true;
-    }
 }
 
 class Strand {
