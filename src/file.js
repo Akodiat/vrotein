@@ -1,16 +1,16 @@
 import * as THREE from "three";
 import { AminoAcidMonomer, Strand, System } from "./system.js";
 
-async function loadLocal(path) {
+async function loadLocal(path, scale=1) {
     const response = await fetch(path);
     if (!response.ok) {
         throw new Error(`Response status: ${response.status}`);
     }
     const json = await response.json();
-    return readFromJSON(json);
+    return readFromJSON(json, scale);
 }
 
-function readFromJSON(json_data) {
+function readFromJSON(json_data, scale=1) {
     const systems = [];
     for (const system of json_data.systems) {
         let sys;
@@ -40,7 +40,7 @@ function readFromJSON(json_data) {
                         e.id,
                         e.type,
                         s,
-                        new THREE.Vector3(...e.p),
+                        new THREE.Vector3(...e.p).multiplyScalar(scale),
                         new THREE.Vector3(...e.a1),
                         new THREE.Vector3(...e.a3),
                     );

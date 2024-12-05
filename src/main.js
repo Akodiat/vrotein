@@ -53,6 +53,7 @@ class PhysicalSphere extends PhysicalMesh {
 let camera, scene, renderer, controls;
 let container;
 let hand1, hand2;
+let handModel1, handModel2;
 let controller1, controller2;
 let controllerGrip1, controllerGrip2;
 
@@ -61,11 +62,15 @@ let world;
 
 let aminoAcids = [];
 let repulsiveSphere;
+let bones1, bones2;
 
 init();
 animate();
 
 function init() {
+
+    world = new CANNON.World();
+
     // Camera
     camera = new THREE.PerspectiveCamera(
         75,
@@ -104,7 +109,22 @@ function init() {
     scene.add(controller2);
 
     const controllerModelFactory = new XRControllerModelFactory();
-    const handModelFactory = new XRHandModelFactory();
+    const handModelFactory = new XRHandModelFactory(null, model=>{
+        model.boneSpheres = [];
+        for (const bone of model.bones) {
+            const b = new PhysicalSphere(
+                0.012,
+                new THREE.MeshStandardMaterial({color: 0xff0000}),
+                1,
+                new THREE.Vector3()
+            );
+            b.body.position.copy(bone.position);
+            b.update();
+            model.boneSpheres.push(b);
+            scene.add(b.mesh);
+            world.addBody(b.body);
+        }
+    });
 
     // Hand 1
     controllerGrip1 = renderer.xr.getControllerGrip(0);
@@ -114,7 +134,9 @@ function init() {
     scene.add(controllerGrip1);
 
     hand1 = renderer.xr.getHand(0);
-    hand1.add(handModelFactory.createHandModel(hand1));
+    handModel1 = handModelFactory.createHandModel(hand1, 'mesh'
+    );
+    hand1.add(handModel1);
 
     scene.add(hand1);
 
@@ -126,7 +148,21 @@ function init() {
     scene.add(controllerGrip2);
 
     hand2 = renderer.xr.getHand(1);
-    hand2.add(handModelFactory.createHandModel(hand2));
+    handModel2 = handModelFactory.createHandModel(hand2, 'mesh', motionController=>{
+        for (const bone of motionController.bones) {
+            const b = new PhysicalSphere(
+                0.012,
+                new THREE.MeshStandardMaterial({color: 0xff0000}),
+                1,
+                new THREE.Vector3()
+            );
+            b.body.position.copy(bone.position);
+            b.update();
+            scene.add(b.mesh);
+            world.addBody(b.body);
+        }
+    });
+    hand2.add(handModel2);
     scene.add(hand2);
 
     const geometry = new THREE.BufferGeometry().setFromPoints([
@@ -156,23 +192,21 @@ function init() {
 
     controls = new TrackballControls(camera, renderer.domElement);
 
-    world = new CANNON.World();
-
     const material = new THREE.MeshStandardMaterial({
         color: 0xffffff,
     });
 
     container = new THREE.Group();
-    container.scale.divideScalar(10)
     scene.add(container);
 
-    loadLocal("resources/8p1a.oxview").then((systems) => {
+    const scale = 1/10;
+    loadLocal("resources/8p1a.oxview", scale).then((systems) => {
         aminoAcids = [];
         for (const system of systems) {
             for (const strand of system.strands) {
                 for (const e of strand.monomers) {
                     const sphere = new PhysicalSphere(
-                        0.25, material, 1, e.position
+                        0.02, material, 1, e.position
                     );
                     sphere.strandId = strand.id; // TODO: save in new class
                     container.add(sphere.mesh);
@@ -192,7 +226,7 @@ function init() {
                     continue;
                 }
                 const dist = e1.mesh.position.distanceTo(e2.mesh.position);
-                if (dist > 2) {
+                if (dist > 0.2) {
                     continue;
                 }
                 const spring = new CANNON.Spring(e1.body, e2.body, {
@@ -210,13 +244,6 @@ function init() {
             }
         }
     });
-
-    const redMaterial = new THREE.MeshStandardMaterial({
-        color: 0xff0000,
-    });
-    repulsiveSphere = new PhysicalSphere(1, redMaterial, 1, new THREE.Vector3());
-    container.add(repulsiveSphere.mesh);
-    world.addBody(repulsiveSphere.body);
 }
 
 function onWindowResize() {
@@ -231,17 +258,32 @@ function animate() {
     // Step the physics world
     world.fixedStep();
 
+    for (const model of [handModel1, handModel2]) {
+        const mc = model.motionController;
+        if (!mc || !mc.bones) {
+            continue;
+        }
+        for (let i=0; i<mc.bones.length; i++) {
+            const bone = mc.bones[i];
+            const boneSphere = mc.boneSpheres[i];
+            boneSphere.body.position.copy(bone.position);
+            boneSphere.update();
+        }
+    }
+
     let com = new THREE.Vector3();
     for (const e of aminoAcids) {
         e.update();
 
+        // "Diffusion"
+        e.body.applyLocalImpulse(
+            new THREE.Vector3().randomDirection().multiplyScalar(0.01),
+            new THREE.Vector3()
+        );
+
         com.add(e.mesh.position);
     }
     com.divideScalar(aminoAcids.length);
-
-    repulsiveSphere.body.position.copy(com);
-    repulsiveSphere.body.position.x += Math.sin(performance.now() / 2000) * 5;
-    repulsiveSphere.update();
 
     controls.update();
 
