@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { TrackballControls } from "three/addons/controls/TrackballControls.js";
-import { VRButton } from "three/addons/webxr/VRButton.js";
+import { XRButton } from "three/addons/webxr/XRButton.js";
 import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFactory.js";
 import { XRHandModelFactory } from "three/addons/webxr/XRHandModelFactory.js";
 import * as CANNON from "../lib/cannon-es.js";
@@ -77,6 +77,7 @@ function init() {
 
     // Scene
     scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x00000, 0);
 
     // Renderer
     renderer = new THREE.WebGLRenderer({
@@ -93,7 +94,7 @@ function init() {
         requiredFeatures: ["hand-tracking"],
     };
 
-    document.body.appendChild(VRButton.createButton(renderer, sessionInit));
+    document.body.appendChild(XRButton.createButton(renderer, sessionInit));
 
     // controllers
     controller1 = renderer.xr.getController(0);
