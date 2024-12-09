@@ -3,6 +3,14 @@ import {loadPDBFromId} from "./pdb_loader.js";
 
 import * as CANNON from "../lib/cannon-es.js";
 
+// 3 residue code (in pdb) to single letter type for Amino Acids
+let codeMap = {
+    "LYS": "K", "CYS": "C", "CYX": "C", "ALA": "A", "THR": "T", "GLU": "E",
+    "GLN": "Q", "SER": "S", "ASP": "D", "ASN": "N", "HIS": "H", "HSD": "H",
+    "GLY": "G", "PRO": "P", "ARG": "R", "VAL": "V", "ILE": "I", "LEU": "L",
+    "MET": "M", "PHE": "F", "TYR": "Y", "TRP": "W"
+};
+
 class Atom {
     constructor(data, scale) {
         this.atomType = data.atomType;
@@ -20,6 +28,8 @@ class AminoAcid {
         this.position = data.position.clone().multiplyScalar(scale);
         this.quaternion = new THREE.Quaternion();
         this.atoms = data.atoms.map(a=>new Atom(a, scale));
+
+        this.type = codeMap[data.resType]
 
         // Add to physics world
         this.physicsShape = new CANNON.Sphere(physicsRadius);

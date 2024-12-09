@@ -6,7 +6,7 @@ import { XRButton } from "three/addons/webxr/XRButton.js";
 import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFactory.js";
 import { XRHandModelFactory } from "three/addons/webxr/XRHandModelFactory.js";
  
-import { SphereView } from "./view.js"
+import { SphereView, AtomSphereView } from "./view.js"
 import { Protein } from "./Protein.js";
 import { HandHandler, populateHand } from "./hand.js";
 
@@ -84,7 +84,7 @@ function init() {
     container = new THREE.Group();
     scene.add(container);
 
-    view = new SphereView(scene, 0.02, 8);
+    view = new SphereView(scene);
     const scale = 1/10;
     const protein = new Protein("8p1a", world, scale);
     protein.init(()=>{
