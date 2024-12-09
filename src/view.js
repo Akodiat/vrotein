@@ -25,7 +25,7 @@ const nucleosideColors = {
 
 class View {
     constructor(scene) {
-        this.container = new THREE.Group()
+        this.container = new THREE.Group();
         scene.add(this.container);
         this.proteins = [];
     }
@@ -66,6 +66,8 @@ class SphereView extends View {
                 this.sphereGeometry,
                 material
             );
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
             mesh.position.copy(e.position);
             this.spheres.set(e, mesh);
             this.container.add(mesh);
@@ -113,6 +115,8 @@ class AtomSphereView extends View {
                 );
                 atomMesh.position.add(atom.position);
                 atomMesh.position.sub(e.position);
+                atomMesh.castShadow = true;
+                atomMesh.receiveShadow = true;
                 mesh.add(atomMesh);
             }
             mesh.position.copy(e.position);

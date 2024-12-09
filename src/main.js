@@ -5,6 +5,7 @@ import { TrackballControls } from "three/addons/controls/TrackballControls.js";
 import { XRButton } from "three/addons/webxr/XRButton.js";
 import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFactory.js";
 import { XRHandModelFactory } from "three/addons/webxr/XRHandModelFactory.js";
+import {XREstimatedLight} from "three/addons/webxr/XREstimatedLight.js";
  
 import { SphereView, AtomSphereView } from "./view.js"
 import { Protein } from "./Protein.js";
@@ -67,15 +68,46 @@ function init() {
     handHandlers.push(new HandHandler(1, renderer, handModelFactory, controllerModelFactory, scene, world));
 
     // Lights
+
     let hemilight = new THREE.HemisphereLight(0x808080, 0x606060);
     hemilight.intensity = 5;
+
     const light = new THREE.DirectionalLight(0xffffff);
     light.position.set(0, 6, 0);
     light.intensity = 6;
+    light.castShadow = true;
+    light.shadow.camera.top = 2;
+    light.shadow.camera.bottom = -2;
+    light.shadow.camera.right = 2;
+    light.shadow.camera.left = -2;
+    light.shadow.mapSize.set(2048, 2048);
+
     let defaultLight = new THREE.Group();
     defaultLight.add(hemilight);
     defaultLight.add(light);
     scene.add(defaultLight);
+
+    // Don't add the XREstimatedLight to the scene initially.
+    // It doesn't have any estimated lighting values until an AR session starts.
+    const xrLight = new XREstimatedLight(renderer);
+    xrLight.addEventListener("estimationstart", () => {
+        // Swap the default light out for the estimated one one we start
+        // getting some estimated values.
+        scene.add(xrLight);
+        scene.remove(defaultLight);
+
+        // The estimated lighting also provides an environment cubemap, which
+        // we can apply here.
+        if (xrLight.environment) {
+            scene.environment = xrLight.environment;
+        }
+    });
+
+    xrLight.addEventListener("estimationend", () => {
+        // Swap the lights back when we stop receiving estimated values.
+        scene.add(defaultLight);
+        scene.remove(xrLight);
+    });
 
     window.addEventListener("resize", onWindowResize);
 
