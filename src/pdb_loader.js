@@ -919,7 +919,7 @@ function addPDBToScene(pdbinfo, pindx) {
                             elems.push(repeatAmino);
                             nextElementId++;
                         });
-                        repeatStrand.updateEnds();
+                        //repeatStrand.updateEnds();
                         strandInit.push(repeatInfo);
                     }
                 });
@@ -967,7 +967,7 @@ function addPDBToScene(pdbinfo, pindx) {
                 console.log("Strand " + nstrand.chainID + " could not be initialized");
             }
             else {
-                currentStrand.updateEnds();
+                //currentStrand.updateEnds();
                 // Take care of repeats Access by Chain Identifier
                 initlist.repeatIDs.forEach((rid, indx) => {
                     let repeatInfo = [];
@@ -1007,7 +1007,7 @@ function addPDBToScene(pdbinfo, pindx) {
                                 console.log("Nucleotide could not be initialized");
                             }
                         });
-                        repeatStrand.updateEnds();
+                        //repeatStrand.updateEnds();
                         strandInit.push(repeatInfo);
                     }
                 });

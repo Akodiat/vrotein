@@ -118,12 +118,26 @@ function init() {
 
     controls = new TrackballControls(camera, renderer.domElement);
 
+    const scale = 1/30;
 
     const gui = new GUI();
 
     const guiParams = {
-        view: 'Residue spheres'
+        pdbId: '8p1a',
+        view: 'Residue spheres',
+        clear: ()=>{
+            scene.remove(view.container);
+            view = new view.constructor(scene, scale);
+        },
+        load: ()=>{
+            const protein = new Protein(guiParams.pdbId, world, scale);
+            protein.init(()=>{
+                view.addProtein(protein);
+            });
+        }
     };
+
+    gui.add(guiParams, 'pdbId').name('PDB ID');
 
     gui.add(guiParams, 'view', [
         "Residue spheres",
@@ -149,8 +163,10 @@ function init() {
         view.copy(oldView);
 	});
 
+    gui.add(guiParams, 'clear').name('Clear');
+    gui.add(guiParams, 'load').name('Load');
 
-    const scale = 1/30;
+
     view = new SphereView(scene, scale);
     const protein = new Protein("8p1a", world, scale);
     protein.init(()=>{

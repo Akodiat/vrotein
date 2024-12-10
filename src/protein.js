@@ -27,8 +27,7 @@ class Atom {
 }
 
 class AminoAcid {
-    constructor(data, strandId, scale, physicsWorld,
-        physicsRadius=0.02, physicsMass=1
+    constructor(data, strandId, scale, physicsWorld, physicsMass=1
     ) {
         this.strandId = strandId;
         this.position = data.position.clone().multiplyScalar(scale);
@@ -39,7 +38,9 @@ class AminoAcid {
         this.type = codeMap[data.resType]
 
         // Add to physics world
-        this.physicsShape = new CANNON.Sphere(physicsRadius);
+        this.physicsShape = new CANNON.Sphere(
+            0.2 * scale
+        );
         this.physicsBody = new CANNON.Body({
             mass: physicsMass,
         });

@@ -56,7 +56,7 @@ class SphereView extends View {
     constructor(scene, scale, segments=8) {
         super(scene, scale);
 
-        const radius = 0.5 * this.scale;
+        const radius = 0.2 * this.scale;
 
         this.sphereGeometry = new THREE.SphereGeometry(
             radius,
