@@ -12,11 +12,17 @@ let codeMap = {
 };
 
 class Atom {
-    constructor(data, scale) {
+    constructor(data, scale, origin) {
         this.atomType = data.atomType;
         this.position = new THREE.Vector3(
             data.x, data.y, data.z
-        ).multiplyScalar(scale);
+        ).multiplyScalar(
+            // Apply scale
+            scale
+        ).sub(
+            // Use local coordinate system
+            origin
+        );
     }
 }
 
@@ -28,7 +34,7 @@ class AminoAcid {
         this.position = data.position.clone().multiplyScalar(scale);
         this.scale = scale;
         this.quaternion = new THREE.Quaternion();
-        this.atoms = data.atoms.map(a=>new Atom(a, scale));
+        this.atoms = data.atoms.map(a=>new Atom(a, scale, this.position));
 
         this.type = codeMap[data.resType]
 
@@ -55,12 +61,13 @@ class AminoAcid {
 
     update() {
         this.position.copy(this.physicsBody.position);
+        this.quaternion.copy(this.physicsBody.quaternion);
     }
 }
 
 class Protein {
     constructor(id="8p1a", physicsWorld, scale) {
-        this.id = id; 
+        this.id = id;
         //"8qql"
         this.physicsWorld = physicsWorld;
         this.scale = scale;
@@ -102,7 +109,7 @@ class Protein {
                 }
                 const spring = new CANNON.Spring(
                     e1.physicsBody,
-                    e2.physicsBody, 
+                    e2.physicsBody,
                     {
                         localAnchorA: new CANNON.Vec3(0, 0, 0),
                         localAnchorB: new CANNON.Vec3(0, 0, 0),

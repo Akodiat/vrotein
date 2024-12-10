@@ -56,7 +56,7 @@ class SphereView extends View {
     constructor(scene, scale, segments=8) {
         super(scene, scale);
 
-        const radius = 0.25 * this.scale;
+        const radius = 0.5 * this.scale;
 
         this.sphereGeometry = new THREE.SphereGeometry(
             radius,
@@ -120,21 +120,20 @@ class AtomSphereView extends View {
             const material = new THREE.MeshStandardMaterial({
                 color: nucleosideColors[e.type],
             });
-            const mesh = new THREE.Group();
+            const aminoAcidMesh = new THREE.Group();
             for (const atom of e.atoms) {
                 const atomMesh = new THREE.Mesh(
                     this.sphereGeometry,
                     material
                 );
-                atomMesh.position.add(atom.position);
-                atomMesh.position.sub(e.position);
+                atomMesh.position.copy(atom.position);
                 atomMesh.castShadow = true;
                 atomMesh.receiveShadow = true;
-                mesh.add(atomMesh);
+                aminoAcidMesh.add(atomMesh);
             }
-            mesh.position.copy(e.position);
-            this.spheres.set(e, mesh);
-            this.container.add(mesh);
+            aminoAcidMesh.position.copy(e.position);
+            this.spheres.set(e, aminoAcidMesh);
+            this.container.add(aminoAcidMesh);
         }
     }
 
@@ -160,7 +159,7 @@ function transformPoint(vector) {
 }
 
 
-class MetaCubeView extends View {
+class MetaBallView extends View {
     constructor(scene, scale) {
         super(scene, scale);
 
@@ -212,4 +211,4 @@ class MetaCubeView extends View {
     }
 }
 
-export {View, SphereView, AtomSphereView, MetaCubeView}
+export {View, SphereView, AtomSphereView, MetaBallView}

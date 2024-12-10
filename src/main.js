@@ -1,15 +1,17 @@
 import * as THREE from "three";
 import * as CANNON from "../lib/cannon-es.js";
+import GUI from '../lib/lil-gui.esm.min.js';
 
 import { TrackballControls } from "three/addons/controls/TrackballControls.js";
 import { XRButton } from "three/addons/webxr/XRButton.js";
 import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFactory.js";
 import { XRHandModelFactory } from "three/addons/webxr/XRHandModelFactory.js";
 import {XREstimatedLight} from "three/addons/webxr/XREstimatedLight.js";
- 
-import { SphereView, AtomSphereView, MetaCubeView } from "./view.js"
+
+import { SphereView, AtomSphereView, MetaBallView } from "./view.js"
 import { Protein } from "./Protein.js";
 import { HandHandler, populateHand } from "./hand.js";
+
 
 let view;
 
@@ -116,8 +118,40 @@ function init() {
 
     controls = new TrackballControls(camera, renderer.domElement);
 
+
+    const gui = new GUI();
+
+    const guiParams = {
+        view: 'Residue spheres'
+    };
+
+    gui.add(guiParams, 'view', [
+        "Residue spheres",
+        "Atom spheres",
+        "Residue meta balls"
+    ]).name('View')
+	.onChange(v => {
+        let viewType;
+		switch (v) {
+            case "Residue spheres":
+                viewType = SphereView;
+                break;
+            case "Atom spheres":
+                viewType = AtomSphereView;
+                break;
+            case "Residue meta balls":
+                viewType = MetaBallView;
+                break;
+        }
+        const oldView = view;
+        scene.remove(oldView.container);
+        view = new viewType(scene, scale);
+        view.copy(oldView);
+	});
+
+
     const scale = 1/30;
-    view = new MetaCubeView(scene, scale);
+    view = new SphereView(scene, scale);
     const protein = new Protein("8p1a", world, scale);
     protein.init(()=>{
         view.addProtein(protein);
