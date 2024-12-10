@@ -26,6 +26,7 @@ class AminoAcid {
     ) {
         this.strandId = strandId;
         this.position = data.position.clone().multiplyScalar(scale);
+        this.scale = scale;
         this.quaternion = new THREE.Quaternion();
         this.atoms = data.atoms.map(a=>new Atom(a, scale));
 
@@ -41,11 +42,13 @@ class AminoAcid {
         physicsWorld.addBody(this.physicsBody);
     }
 
-    diffuse(magnitude=0.01) {
+    diffuse(magnitude=0.1) {
         // Apply impulse in random direction
         // Make things wiggle
         this.physicsBody.applyLocalImpulse(
-            new THREE.Vector3().randomDirection().multiplyScalar(magnitude),
+            new THREE.Vector3().randomDirection().multiplyScalar(
+                magnitude * this.scale
+            ),
             new THREE.Vector3()
         );
     }
@@ -94,7 +97,7 @@ class Protein {
                     continue;
                 }
                 const dist = e1.position.distanceTo(e2.position);
-                if (dist > 0.2) {
+                if (dist > 2 * this.scale) {
                     continue;
                 }
                 const spring = new CANNON.Spring(
@@ -104,7 +107,7 @@ class Protein {
                         localAnchorA: new CANNON.Vec3(0, 0, 0),
                         localAnchorB: new CANNON.Vec3(0, 0, 0),
                         restLength: dist,
-                        stiffness: 10,
+                        stiffness: 1 * this.scale,
                         damping: 0.0
                     }
                 );

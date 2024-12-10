@@ -7,7 +7,7 @@ import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFa
 import { XRHandModelFactory } from "three/addons/webxr/XRHandModelFactory.js";
 import {XREstimatedLight} from "three/addons/webxr/XREstimatedLight.js";
  
-import { SphereView, AtomSphereView } from "./view.js"
+import { SphereView, AtomSphereView, MetaCubeView } from "./view.js"
 import { Protein } from "./Protein.js";
 import { HandHandler, populateHand } from "./hand.js";
 
@@ -42,6 +42,9 @@ function init() {
     // Scene
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x00000, 0);
+
+    const axesHelper = new THREE.AxesHelper(0.5); scene.add(axesHelper);
+    scene.add(axesHelper);
 
     // Renderer
     renderer = new THREE.WebGLRenderer({
@@ -113,11 +116,8 @@ function init() {
 
     controls = new TrackballControls(camera, renderer.domElement);
 
-    container = new THREE.Group();
-    scene.add(container);
-
-    view = new SphereView(scene);
-    const scale = 1/10;
+    const scale = 1/30;
+    view = new MetaCubeView(scene, scale);
     const protein = new Protein("8p1a", world, scale);
     protein.init(()=>{
         view.addProtein(protein);
