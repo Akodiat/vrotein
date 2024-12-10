@@ -9,7 +9,7 @@ import { XRHandModelFactory } from "three/addons/webxr/XRHandModelFactory.js";
 import {XREstimatedLight} from "three/addons/webxr/XREstimatedLight.js";
 
 import { SphereView, AtomSphereView, MetaBallView } from "./view.js"
-import { Protein } from "./Protein.js";
+import { Protein } from "./protein.js";
 import { HandHandler, populateHand } from "./hand.js";
 
 
