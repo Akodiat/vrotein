@@ -1,5 +1,8 @@
 import * as THREE from "three";
 import { MarchingCubes } from 'three/addons/objects/MarchingCubes.js';
+import { Line2 } from 'three/addons/lines/Line2.js';
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 
 const nucleosideColors = {
     "K": new THREE.Color(0x4747B8), //Royal Blue
@@ -161,7 +164,6 @@ class AtomSphereView extends View {
                 iInst++;
             }
         }
-        console.log(protein.aminoAcids.length);
         this.instancedMeshes.set(protein, mesh);
         this.container.add(mesh);
     }
@@ -255,4 +257,149 @@ class MetaBallView extends View {
     }
 }
 
-export {View, SphereView, AtomSphereView, MetaBallView}
+class LineView extends View {
+    constructor(scene, scale) {
+        super(scene, scale);
+
+        this.material = new LineMaterial( {
+            worldUnits: true,
+            linewidth: 0.12 * this.scale,
+            vertexColors: true
+        });
+
+        this.lines = new Map();
+    }
+
+    addProtein(protein) {
+        super.addProtein(protein);
+
+        for (const strand of protein.strands) {
+            const positions = [], colors = [];
+            for(const e of strand) {
+                positions.push(
+                    e.position.x,
+                    e.position.y,
+                    e.position.z
+                );
+                const c = nucleosideColors[e.type];
+                colors.push(c.r, c.g, c.b)
+            }
+
+            const geometry = new LineGeometry();
+            geometry.setPositions(positions);
+            geometry.setColors(colors);
+
+            const line = new Line2(geometry, this.material);
+            line.computeLineDistances();
+            line.scale.set(1, 1, 1);
+            this.container.add(line);
+            this.lines.set(strand, line);
+        }
+    }
+
+    update() {
+        for (const protein of this.proteins) {
+            for (const strand of protein.strands) {
+                const positions = [];
+                for (const e of strand) {
+                    e.update();
+                    positions.push(
+                        e.position.x, e.position.y, e.position.z
+                    );
+                    e.diffuse();
+                }
+                const line = this.lines.get(strand);
+                line.geometry.setPositions(positions);
+                line.needsUpdate = true;
+            }
+        }
+    }
+}
+
+class SplineView extends View {
+    constructor(scene, scale) {
+        super(scene, scale);
+
+        this.material = new LineMaterial( {
+            worldUnits: true,
+            linewidth: 0.12 * this.scale,
+            vertexColors: true
+        });
+
+        this.lines = new Map();
+    }
+
+    addProtein(protein) {
+        super.addProtein(protein);
+
+        const point = new THREE.Vector3();
+        for (const strand of protein.strands) {
+
+            const points = strand.map(e=>e.position);
+            const spline = new THREE.CatmullRomCurve3(points);
+            const divisions = Math.round(12 * points.length);
+            const positions = [];
+            const colors = [];
+            let iElem = 0;
+            const lStrand = strand.length;
+            for (let i=0; i<divisions; i++) {
+                const t = i / divisions;
+                spline.getPoint(t, point);
+                positions.push(point.x, point.y, point.z);
+
+                if (iElem+1<lStrand &&
+                    point.distanceToSquared(strand[iElem].position) >
+                    point.distanceToSquared(strand[iElem+1].position)
+                ) {
+                    // If we are closer to the next element, advance
+                    iElem++
+                }
+                const c = nucleosideColors[strand[iElem].type];
+                colors.push(c.r, c.g, c.b)
+            }
+
+            const geometry = new LineGeometry();
+            geometry.setPositions(positions);
+            geometry.setColors(colors);
+
+            const line = new Line2(geometry, this.material);
+            line.computeLineDistances();
+            line.scale.set(1, 1, 1);
+            this.container.add(line);
+            this.lines.set(strand, line);
+        }
+    }
+
+    update() {
+        const point = new THREE.Vector3();
+        for (const protein of this.proteins) {
+            for (const strand of protein.strands) {
+                const points = [];
+                for (const e of strand) {
+                    e.update();
+                    points.push(e.position);
+                    e.diffuse();
+                }
+                const spline = new THREE.CatmullRomCurve3(points);
+                const divisions = Math.round(12 * points.length);
+                const positions = [];
+                for (let i=0, l=divisions; i<l; i++) {
+                    const t = i / l;
+
+                    spline.getPoint(t, point);
+                    positions.push(point.x, point.y, point.z);
+                }
+                const line = this.lines.get(strand);
+                line.geometry.setPositions(positions);
+                line.needsUpdate = true;
+            }
+        }
+    }
+}
+
+export {
+    View,
+    SphereView, AtomSphereView,
+    MetaBallView,
+    LineView, SplineView
+}

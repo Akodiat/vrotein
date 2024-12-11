@@ -8,7 +8,7 @@ import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFa
 import { XRHandModelFactory } from "three/addons/webxr/XRHandModelFactory.js";
 import {XREstimatedLight} from "three/addons/webxr/XREstimatedLight.js";
 
-import { SphereView, AtomSphereView, MetaBallView } from "./view.js"
+import { SphereView, AtomSphereView, MetaBallView, LineView, SplineView } from "./view.js"
 import { Protein } from "./protein.js";
 import { HandHandler, populateHand } from "./hand.js";
 
@@ -146,6 +146,8 @@ function init() {
     };
 
     gui.add(guiParams, "view", [
+        "Chain splines",
+        "Chain lines",
         "Residue spheres",
         "Atom spheres",
         "Residue meta balls"
@@ -153,6 +155,12 @@ function init() {
 	.onChange(v => {
         let viewType;
 		switch (v) {
+            case "Chain lines":
+                viewType = LineView;
+                break;
+            case "Chain splines":
+                viewType = SplineView;
+                break;
             case "Residue spheres":
                 viewType = SphereView;
                 break;
