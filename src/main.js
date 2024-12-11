@@ -126,6 +126,7 @@ function init() {
     const scale = 1/30;
 
     const gui = new GUI();
+    gui.domElement.classList.add('force-touch-styles');
 
     const guiParams = {
         view: "Residue spheres",
@@ -192,7 +193,7 @@ function init() {
             );
             protein.init(()=>view.addProtein(protein));
         }
-        folder.add(guiParams, "load"+example);
+        folder.add(guiParams, "load"+example).name(example);
     }
 
     view = new SphereView(scene, scale);
