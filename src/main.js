@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import * as CANNON from "../lib/cannon-es.js";
-import GUI from '../lib/lil-gui.esm.min.js';
+import GUI from "../lib/lil-gui.esm.min.js";
 
 import { TrackballControls } from "three/addons/controls/TrackballControls.js";
 import { XRButton } from "three/addons/webxr/XRButton.js";
@@ -117,33 +117,30 @@ function init() {
     window.addEventListener("resize", onWindowResize);
 
     controls = new TrackballControls(camera, renderer.domElement);
+    //controls.target.copy(spawnPoint);
 
     const scale = 1/30;
 
     const gui = new GUI();
 
     const guiParams = {
-        pdbId: '8p1a',
-        view: 'Residue spheres',
+        view: "Residue spheres",
         clear: ()=>{
             scene.remove(view.container);
             view = new view.constructor(scene, scale);
         },
+        pdbId: "8p1a",
         load: ()=>{
             const protein = new Protein(guiParams.pdbId, world, scale);
-            protein.init(()=>{
-                view.addProtein(protein);
-            });
+            protein.init(()=>view.addProtein(protein));
         }
     };
 
-    gui.add(guiParams, 'pdbId').name('PDB ID');
-
-    gui.add(guiParams, 'view', [
+    gui.add(guiParams, "view", [
         "Residue spheres",
         "Atom spheres",
         "Residue meta balls"
-    ]).name('View')
+    ]).name("View")
 	.onChange(v => {
         let viewType;
 		switch (v) {
@@ -163,9 +160,21 @@ function init() {
         view.copy(oldView);
 	});
 
-    gui.add(guiParams, 'clear').name('Clear');
-    gui.add(guiParams, 'load').name('Load');
+    gui.add(guiParams, "pdbId").name("PDB ID");
+    gui.add(guiParams, "load").name("Load");
+    gui.add(guiParams, "clear").name("Clear");
 
+
+    const folder = gui.addFolder("Examples");
+    for (const example of [
+        "8qql","8p1a", "8p1b", "8p1c", "8p1d"
+    ]) {
+        guiParams["load"+example] = ()=>{
+            const protein = new Protein(example, world, scale);
+            protein.init(()=>view.addProtein(protein));
+        }
+        folder.add(guiParams, "load"+example);
+    }
 
     view = new SphereView(scene, scale);
     const protein = new Protein("8p1a", world, scale);

@@ -56,95 +56,134 @@ class SphereView extends View {
     constructor(scene, scale, segments=8) {
         super(scene, scale);
 
-        const radius = 0.2 * this.scale;
 
-        this.sphereGeometry = new THREE.SphereGeometry(
+        this.material = new THREE.MeshStandardMaterial();
+
+        const radius = 0.2 * this.scale;
+        this.geometry = new THREE.SphereGeometry(
             radius,
             segments,
             segments,
         );
 
-        this.spheres = new Map();
+        this.instancedMeshes = new Map();
     }
 
     addProtein(protein) {
         super.addProtein(protein);
-        for (const e of protein.aminoAcids) {
-            const material = new THREE.MeshStandardMaterial({
-                color: nucleosideColors[e.type],
-            });
-            const mesh = new THREE.Mesh(
-                this.sphereGeometry,
-                material
-            );
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
-            mesh.position.copy(e.position);
-            this.spheres.set(e, mesh);
-            this.container.add(mesh);
+
+        const mesh = new THREE.InstancedMesh(
+            this.geometry,
+            this.material,
+            protein.aminoAcids.length
+        );
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+
+        const matrix = new THREE.Matrix4();
+
+        for (let i=0; i<protein.aminoAcids.length; i++) {
+            const e = protein.aminoAcids[i];
+            matrix.setPosition(e.position);
+
+            mesh.setMatrixAt(i, matrix);
+            mesh.setColorAt(i, nucleosideColors[e.type]);
         }
+        this.instancedMeshes.set(protein, mesh);
+        this.container.add(mesh);
     }
 
     update() {
+        const matrix = new THREE.Matrix4();
         for (const protein of this.proteins) {
-            for (const e of protein.aminoAcids) {
+            const mesh = this.instancedMeshes.get(protein);
+            for (let i=0; i<protein.aminoAcids.length; i++) {
+                const e = protein.aminoAcids[i];
                 e.update();
-                this.spheres.get(e).position.copy(e.position);
+                matrix.setPosition(e.position);
+                mesh.setMatrixAt(i, matrix);
                 e.diffuse();
             }
+            mesh.instanceMatrix.needsUpdate = true;
         }
     }
 }
 
 class AtomSphereView extends View {
-    constructor(scene, scale, segments=8) {
+    constructor(scene, scale, segments=6) {
         super(scene, scale);
 
-        const radius = 0.1 * this.scale;
+        this.material = new THREE.MeshStandardMaterial();
 
-        this.sphereGeometry = new THREE.SphereGeometry(
+        const radius = 0.1 * this.scale;
+        this.geometry = new THREE.SphereGeometry(
             radius,
             segments,
             segments,
         );
-        this.sphereMaterial = new THREE.MeshStandardMaterial({
-            color: 0xffffff,
-        });
 
-        this.spheres = new Map();
+        this.instancedMeshes = new Map();
+
+        this.tempV = new THREE.Vector3();
+        this.tempM = new THREE.Matrix4();
+        this.tempQ = new THREE.Quaternion();
     }
 
     addProtein(protein) {
         super.addProtein(protein);
-        for (const e of protein.aminoAcids) {
-            const material = new THREE.MeshStandardMaterial({
-                color: nucleosideColors[e.type],
-            });
-            const aminoAcidMesh = new THREE.Group();
+
+        // Count the atoms
+        const count = protein.aminoAcids.map(
+            e=>e.atoms.length
+        ).reduce((s, v) => s + v, 0);
+
+        const mesh = new THREE.InstancedMesh(
+            this.geometry,
+            this.material,
+            count
+        );
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+
+        this.tempM = new THREE.Matrix4();
+
+        let iInst = 0;
+        for (let i=0; i<protein.aminoAcids.length; i++) {
+            const e = protein.aminoAcids[i];
             for (const atom of e.atoms) {
-                const atomMesh = new THREE.Mesh(
-                    this.sphereGeometry,
-                    material
-                );
-                atomMesh.position.copy(atom.position);
-                atomMesh.castShadow = true;
-                atomMesh.receiveShadow = true;
-                aminoAcidMesh.add(atomMesh);
+                this.tempV.copy(atom.position);
+                //this.tempV.applyQuaternion(e.quaternion);
+                this.tempV.add(e.position);
+                this.tempM.setPosition(this.tempV);
+                mesh.setMatrixAt(iInst, this.tempM);
+                mesh.setColorAt(iInst, nucleosideColors[e.type]);
+                iInst++;
             }
-            aminoAcidMesh.position.copy(e.position);
-            this.spheres.set(e, aminoAcidMesh);
-            this.container.add(aminoAcidMesh);
         }
+        console.log(protein.aminoAcids.length);
+        this.instancedMeshes.set(protein, mesh);
+        this.container.add(mesh);
     }
 
     update() {
+        this.tempM = new THREE.Matrix4();
         for (const protein of this.proteins) {
-            for (const e of protein.aminoAcids) {
+            const mesh = this.instancedMeshes.get(protein);
+            let iInst = 0;
+            for (let i=0; i<protein.aminoAcids.length; i++) {
+                const e = protein.aminoAcids[i];
                 e.update();
-                this.spheres.get(e).position.copy(e.position);
-                this.spheres.get(e).quaternion.copy(e.quaternion);
+                for (const atom of e.atoms) {
+                    this.tempV.copy(atom.position);
+                    this.tempV.applyQuaternion(e.quaternion);
+                    this.tempV.add(e.position);
+                    this.tempM.setPosition(this.tempV);
+                    mesh.setMatrixAt(iInst, this.tempM);
+                    iInst++;
+                }
                 e.diffuse();
             }
+            mesh.instanceMatrix.needsUpdate = true;
         }
     }
 }
@@ -166,15 +205,19 @@ class MetaBallView extends View {
         const material = new THREE.MeshStandardMaterial({
             // envMap: scene.environment,
             roughness: 0.1,
-            metalness: 0.9,
+            metalness: 0.8,
             vertexColors: true
         });
 
-        this.blob = new MarchingCubes(128, material, false, true, 500000);
+        this.localScale = 0.7;
+        this.blob = new MarchingCubes(64, material, false, true, 50000);
+        this.blob.scale.multiplyScalar(this.localScale);
+        this.blob.position.sub(new THREE.Vector3(1,1,1));
+        this.blob.position.add(this.blob.scale);
         this.container.add(this.blob);
 
-        this.strength = 0.17 * this.scale // this.scalingFactor;
-        this.subtract = 200 * this.scale  /// this.scalingFactor;
+        this.strength = 0.35 * this.scale;
+        this.subtract = 500 * this.scale;
     }
 
     addProtein(protein) {
@@ -182,9 +225,9 @@ class MetaBallView extends View {
         for (const e of protein.aminoAcids) {
             const p = transformPoint(e.position);
             this.blob.addBall(
-                p.x,
-                p.y,
-                p.z,
+                p.x / this.localScale,
+                p.y / this.localScale,
+                p.z / this.localScale,
                 this.strength, this.subtract,
                 nucleosideColors[e.type]
             );
@@ -198,9 +241,9 @@ class MetaBallView extends View {
                 e.update();
                 const p = transformPoint(e.position);
                 this.blob.addBall(
-                    p.x,
-                    p.y,
-                    p.z,
+                    p.x / this.localScale,
+                    p.y / this.localScale,
+                    p.z / this.localScale,
                     this.strength, this.subtract,
                     nucleosideColors[e.type]
                 );
