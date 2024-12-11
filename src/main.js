@@ -32,6 +32,9 @@ function init() {
 
     world = new CANNON.World();
 
+    // Place closer to eye level
+    const spawnPoint = new THREE.Vector3(0, 1.5, 0);
+
     // Camera
     camera = new THREE.PerspectiveCamera(
         75,
@@ -40,6 +43,7 @@ function init() {
         100,
     );
     camera.position.z = 1;
+    camera.position.y = spawnPoint.y;
 
     // Scene
     scene = new THREE.Scene();
@@ -117,7 +121,7 @@ function init() {
     window.addEventListener("resize", onWindowResize);
 
     controls = new TrackballControls(camera, renderer.domElement);
-    //controls.target.copy(spawnPoint);
+    controls.target.copy(spawnPoint);
 
     const scale = 1/30;
 
@@ -127,7 +131,7 @@ function init() {
         view: "Residue spheres",
         clear: ()=>{
             scene.remove(view.container);
-            view = new view.constructor(scene, scale);
+            view = new view.constructor(scene, scale, spawnPoint);
         },
         pdbId: "8p1a",
         load: ()=>{
@@ -156,7 +160,7 @@ function init() {
         }
         const oldView = view;
         scene.remove(oldView.container);
-        view = new viewType(scene, scale);
+        view = new viewType(scene, scale, spawnPoint);
         view.copy(oldView);
 	});
 
@@ -176,7 +180,7 @@ function init() {
         folder.add(guiParams, "load"+example);
     }
 
-    view = new SphereView(scene, scale);
+    view = new SphereView(scene, scale, spawnPoint);
     const protein = new Protein("8p1a", world, scale);
     protein.init(()=>{
         view.addProtein(protein);
