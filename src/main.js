@@ -131,11 +131,16 @@ function init() {
         view: "Residue spheres",
         clear: ()=>{
             scene.remove(view.container);
-            view = new view.constructor(scene, scale, spawnPoint);
+            view = new view.constructor(scene, scale);
         },
         pdbId: "8p1a",
         load: ()=>{
-            const protein = new Protein(guiParams.pdbId, world, scale);
+            const protein = new Protein(
+                guiParams.pdbId,
+                world,
+                scale,
+                spawnPoint
+            );
             protein.init(()=>view.addProtein(protein));
         }
     };
@@ -160,7 +165,7 @@ function init() {
         }
         const oldView = view;
         scene.remove(oldView.container);
-        view = new viewType(scene, scale, spawnPoint);
+        view = new viewType(scene, scale);
         view.copy(oldView);
 	});
 
@@ -174,14 +179,18 @@ function init() {
         "8qql","8p1a", "8p1b", "8p1c", "8p1d"
     ]) {
         guiParams["load"+example] = ()=>{
-            const protein = new Protein(example, world, scale);
+            const protein = new Protein(
+                example, world, scale, spawnPoint
+            );
             protein.init(()=>view.addProtein(protein));
         }
         folder.add(guiParams, "load"+example);
     }
 
-    view = new SphereView(scene, scale, spawnPoint);
-    const protein = new Protein("8p1a", world, scale);
+    view = new SphereView(scene, scale);
+    const protein = new Protein(
+        "8p1a", world, scale, spawnPoint
+    );
     protein.init(()=>{
         view.addProtein(protein);
     });

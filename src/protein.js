@@ -27,10 +27,11 @@ class Atom {
 }
 
 class AminoAcid {
-    constructor(data, strandId, scale, physicsWorld, physicsMass=1
+    constructor(data, strandId, scale, position, physicsWorld, physicsMass=1
     ) {
         this.strandId = strandId;
         this.position = data.position.clone().multiplyScalar(scale);
+        this.position.add(position);
         this.scale = scale;
         this.quaternion = new THREE.Quaternion();
         this.atoms = data.atoms.map(a=>new Atom(a, scale, this.position));
@@ -67,11 +68,12 @@ class AminoAcid {
 }
 
 class Protein {
-    constructor(id="8p1a", physicsWorld, scale) {
+    constructor(id="8p1a", physicsWorld, scale, position) {
         this.id = id;
         //"8qql"
         this.physicsWorld = physicsWorld;
         this.scale = scale;
+        this.position = position
     }
     init(callback) {
         loadPDBFromId(this.id).then(systems=>{
@@ -81,7 +83,8 @@ class Protein {
                 const strand = [];
                 for (const e of chain.residues) {
                     const aminoAcid = new AminoAcid(
-                        e, chain.id, this.scale, this.physicsWorld
+                        e, chain.id, this.scale, this.position,
+                        this.physicsWorld
                     );
                     this.aminoAcids.push(aminoAcid);
                     strand.push(aminoAcid);
@@ -115,7 +118,7 @@ class Protein {
                         localAnchorA: new CANNON.Vec3(0, 0, 0),
                         localAnchorB: new CANNON.Vec3(0, 0, 0),
                         restLength: dist,
-                        stiffness: 1 * this.scale,
+                        stiffness: 5 * this.scale,
                         damping: 0.0
                     }
                 );

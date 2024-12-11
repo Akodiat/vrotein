@@ -25,11 +25,9 @@ const nucleosideColors = {
 };
 
 class View {
-    constructor(scene, scale, spawnPoint) {
+    constructor(scene, scale) {
         this.scale = scale;
         this.container = new THREE.Group();
-
-        this.container.position.copy(spawnPoint);
 
         scene.add(this.container);
         this.proteins = [];
@@ -56,8 +54,8 @@ class View {
 }
 
 class SphereView extends View {
-    constructor(scene, scale, spawnPoint, segments=8) {
-        super(scene, scale, spawnPoint);
+    constructor(scene, scale, segments=8) {
+        super(scene, scale);
 
 
         this.material = new THREE.MeshStandardMaterial();
@@ -113,8 +111,8 @@ class SphereView extends View {
 }
 
 class AtomSphereView extends View {
-    constructor(scene, scale, spawnPoint, segments=6) {
-        super(scene, scale, spawnPoint);
+    constructor(scene, scale, segments=6) {
+        super(scene, scale);
 
         this.material = new THREE.MeshStandardMaterial();
 
@@ -202,8 +200,8 @@ function transformPoint(vector) {
 
 
 class MetaBallView extends View {
-    constructor(scene, scale, spawnPoint) {
-        super(scene, scale, spawnPoint);
+    constructor(scene, scale) {
+        super(scene, scale);
 
         const material = new THREE.MeshStandardMaterial({
             // envMap: scene.environment,
