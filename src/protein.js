@@ -31,10 +31,10 @@ class AminoAcid {
     ) {
         this.strandId = strandId;
         this.position = data.position.clone().multiplyScalar(scale);
-        this.position.add(position);
         this.scale = scale;
         this.quaternion = new THREE.Quaternion();
         this.atoms = data.atoms.map(a=>new Atom(a, scale, this.position));
+        this.position.add(position);
 
         this.type = codeMap[data.resType]
 
