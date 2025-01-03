@@ -168,7 +168,7 @@ class Protein {
                         localAnchorA: new CANNON.Vec3(0, 0, 0),
                         localAnchorB: new CANNON.Vec3(0, 0, 0),
                         restLength: dist,
-                        stiffness: 10 * this.scale,
+                        stiffness: 30 * this.scale,
                         damping: 0.0
                     }
                 );
