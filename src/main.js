@@ -189,7 +189,7 @@ function init() {
 
     const folder = gui.addFolder("Examples");
     for (const example of [
-        "8qql","6a6b", "8p1a", "8p1b", "8p1c", "8p1d"
+        "8p1a", "8qql","6a6b", "6vxx"
     ]) {
         guiParams["load"+example] = ()=>{
             const protein = new Protein(
