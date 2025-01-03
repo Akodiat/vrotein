@@ -131,16 +131,19 @@ function init() {
     const guiParams = {
         view: "Residue spheres",
         clear: ()=>{
+            world.bodies.forEach(b=>world.removeBody(b));
             scene.remove(view.container);
             view = new view.constructor(scene, scale);
         },
         pdbId: "8p1a",
+        physicsResolution: 2,
         load: ()=>{
             const protein = new Protein(
                 guiParams.pdbId,
                 world,
                 scale,
-                spawnPoint
+                spawnPoint,
+                guiParams.physicsResolution
             );
             protein.init(()=>view.addProtein(protein));
         }
@@ -181,6 +184,7 @@ function init() {
     gui.add(guiParams, "pdbId").name("PDB ID");
     gui.add(guiParams, "load").name("Load");
     gui.add(guiParams, "clear").name("Clear");
+    gui.add(guiParams, "physicsResolution").name("AAs per element");
 
 
     const folder = gui.addFolder("Examples");
@@ -189,7 +193,8 @@ function init() {
     ]) {
         guiParams["load"+example] = ()=>{
             const protein = new Protein(
-                example, world, scale, spawnPoint
+                example, world, scale, spawnPoint,
+                guiParams.physicsResolution
             );
             protein.init(()=>view.addProtein(protein));
         }
@@ -198,7 +203,8 @@ function init() {
 
     view = new SphereView(scene, scale);
     const protein = new Protein(
-        "8p1a", world, scale, spawnPoint
+        "8p1a", world, scale, spawnPoint,
+        guiParams.physicsResolution
     );
     protein.init(()=>{
         view.addProtein(protein);

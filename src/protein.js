@@ -27,23 +27,48 @@ class Atom {
 }
 
 class AminoAcid {
-    constructor(data, strandId, scale, position, physicsWorld, physicsMass=1
+    constructor(data, scale, origin) {
+        this.position = data.position.clone().multiplyScalar(
+            scale
+        ).sub(
+            origin
+        );
+        this.atoms = data.atoms.map(a=>new Atom(a, scale,
+            data.position.clone().multiplyScalar(scale)
+        ));
+        this.type = codeMap[data.resType];
+    }
+}
+
+class AAGroup {
+    constructor(aaData, strandId, scale, proteinPos, physicsWorld, physicsMass=1
     ) {
         this.strandId = strandId;
-        this.position = data.position.clone().multiplyScalar(scale);
+        this.aminoAcids = [];
+
+        // Calculate group centre of mass
+        this.position = new THREE.Vector3();
+        aaData.forEach(data=>this.position.add(data.position.clone().multiplyScalar(
+            scale
+        )));
+        this.position.divideScalar(aaData.length);
+
+        for (const data of aaData) {
+            const e = new AminoAcid(data, scale, this.position);
+            this.aminoAcids.push(e);
+        }
+
+        this.position.add(proteinPos);
+
         this.scale = scale;
         this.quaternion = new THREE.Quaternion();
-        this.atoms = data.atoms.map(a=>new Atom(a, scale, this.position));
-        this.position.add(position);
-
-        this.type = codeMap[data.resType]
 
         // Add to physics world
         this.physicsShape = new CANNON.Sphere(
-            0.2 * scale
+            0.2 * scale // * aaData.length
         );
         this.physicsBody = new CANNON.Body({
-            mass: physicsMass,
+            mass: aaData.length * physicsMass,
         });
         this.physicsBody.addShape(this.physicsShape);
         this.physicsBody.position.copy(this.position);
@@ -68,26 +93,34 @@ class AminoAcid {
 }
 
 class Protein {
-    constructor(id="8p1a", physicsWorld, scale, position) {
+    constructor(id="8p1a", physicsWorld, scale, position, physicsResolution=1) {
         this.id = id;
         //"8qql"
         this.physicsWorld = physicsWorld;
         this.scale = scale;
-        this.position = position
+        this.position = position;
+        this.physicsResolution = physicsResolution;
     }
     init(callback) {
         loadPDBFromId(this.id).then(systems=>{
-            this.aminoAcids = [];
+            this.aaGroups = [];
             this.strands = [];
             for (const chain of systems) {
                 const strand = [];
-                for (const e of chain.residues) {
-                    const aminoAcid = new AminoAcid(
-                        e, chain.id, this.scale, this.position,
-                        this.physicsWorld
-                    );
-                    this.aminoAcids.push(aminoAcid);
-                    strand.push(aminoAcid);
+                let elements = [];
+                for (let i=0, l=chain.residues.length; i<l; i++) {
+                    elements.push(chain.residues[i]);
+                    // Group up to "physicsResolution" amino acids
+                    // together in physics world.
+                    if (i % this.physicsResolution === 0) {
+                        const aaGroup = new AAGroup(
+                            elements, chain.id, this.scale, this.position,
+                            this.physicsWorld
+                        );
+                        this.aaGroups.push(aaGroup);
+                        strand.push(aaGroup);
+                        elements = [];
+                    }
                 }
                 this.strands.push(strand);
             }
@@ -96,14 +129,31 @@ class Protein {
             callback.bind(this)();
         });
     }
+
+    getResidueCount() {
+        let sum = 0;
+        this.aaGroups.forEach(g => sum += g.aminoAcids.length);
+        return sum;
+    }
+
+    getAtomCount() {
+        let sum = 0;
+        this.aaGroups.forEach(
+            g => g.aminoAcids.forEach(
+                a => sum += a.atoms.length
+            )
+        );
+        return sum;
+    }
+
     initSpringNetwork() {
-        for (let i = 0; i < this.aminoAcids.length; i++) {
-            for (let j = 0; j < this.aminoAcids.length; j++) {
+        for (let i = 0; i < this.aaGroups.length; i++) {
+            for (let j = 0; j < this.aaGroups.length; j++) {
                 if (j <= i) {
                     continue;
                 }
-                const e1 = this.aminoAcids[i];
-                const e2 = this.aminoAcids[j];
+                const e1 = this.aaGroups[i];
+                const e2 = this.aaGroups[j];
                 if (e1.strandId !== e2.strandId) {
                     continue;
                 }
@@ -118,7 +168,7 @@ class Protein {
                         localAnchorA: new CANNON.Vec3(0, 0, 0),
                         localAnchorB: new CANNON.Vec3(0, 0, 0),
                         restLength: dist,
-                        stiffness: 5 * this.scale,
+                        stiffness: 10 * this.scale,
                         damping: 0.0
                     }
                 );

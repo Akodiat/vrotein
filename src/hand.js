@@ -2,14 +2,12 @@ import * as THREE from "three";
 import * as CANNON from "../lib/cannon-es.js";
 
 function populateHand(model, scene, world) {
-    const radius = 0.012;
-    const segments = 8;
+    const radius = 0.015;
     const material = new THREE.MeshStandardMaterial({color: 0xff0000});
-    const mass = 1;
-    const sphereGeometry = new THREE.SphereGeometry(
+    const mass = 10;
+    const sphereGeometry = new THREE.IcosahedronGeometry(
         radius,
-        segments,
-        segments,
+        1
     );
 
     model.physicalBones = [];
@@ -51,6 +49,7 @@ class HandHandler {
         );
         scene.add(this.controllerGrip);
 
+        /*
         const geometry = new THREE.BufferGeometry().setFromPoints([
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(0, 0, -1),
@@ -61,6 +60,7 @@ class HandHandler {
         line.scale.z = 5;
 
         this.controller.add(line.clone());
+        */
         scene.add(this.controller);
     }
 
