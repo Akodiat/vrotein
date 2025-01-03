@@ -64,7 +64,7 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     const sessionInit = {
-        requiredFeatures: ["hand-tracking"],
+        optionalFeatures: ["hand-tracking", "light-estimation", "unbounded"]
     };
 
     document.body.appendChild(XRButton.createButton(renderer, sessionInit));
