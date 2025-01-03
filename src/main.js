@@ -129,7 +129,7 @@ function init() {
     gui.domElement.classList.add('force-touch-styles');
 
     const guiParams = {
-        view: "Residue spheres",
+        view: "Atom spheres",
         clear: ()=>{
             world.bodies.forEach(b=>world.removeBody(b));
             scene.remove(view.container);
@@ -201,7 +201,7 @@ function init() {
         folder.add(guiParams, "load"+example).name(example);
     }
 
-    view = new SphereView(scene, scale);
+    view = new AtomSphereView(scene, scale);
     const protein = new Protein(
         "8p1a", world, scale, spawnPoint,
         guiParams.physicsResolution
