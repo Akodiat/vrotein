@@ -46,9 +46,9 @@ class HandHandler {
         this.hand.addEventListener('pinchstart', event => {
             const controller = event.target;
             const indexTip = controller.joints['index-finger-tip'];
-            const bodyA = collideObject(indexTip, this.view.proteins);
+            const nearby = collideObject(indexTip, this.view.proteins);
 
-            if (bodyA) {
+            if (nearby.length > 0) {
                 const shape = new CANNON.Sphere(0.015);
                 // TODO: use one of physicalBones instead?
                 // This is for the pitch drag
@@ -58,21 +58,24 @@ class HandHandler {
                 this.physicsBody.addShape(shape);
                 this.physicsBody.position = indexTip.position;
 
-                this.springForce = new CANNON.Spring(
-                    bodyA, this.physicsBody,
-                    {
-                        localAnchorA: new CANNON.Vec3(0, 0, 0),
-                        localAnchorB: new CANNON.Vec3(0, 0, 0),
-                        restLength: 0,
-                        stiffness: 100,
-                        damping: 10
-                    }
-                );
+                this.springForces = [];
+                for (const body of nearby) {
+                    this.springForces.push(new CANNON.Spring(
+                        body, this.physicsBody,
+                        {
+                            localAnchorA: new CANNON.Vec3(0, 0, 0),
+                            localAnchorB: new CANNON.Vec3(0, 0, 0),
+                            restLength: body.position.distanceTo(this.physicsBody.position),
+                            stiffness: 100,
+                            damping: 50
+                        }
+                    ));
+                }
 
                 // Compute the force after each step
                 this.view.proteins[0].physicsWorld.addEventListener("postStep", () => {
-                    if (this.springForce) {
-                        this.springForce.applyForce();
+                    for (const f of this.springForces) {
+                        f.applyForce();
                     }
                 });
             }
@@ -81,7 +84,7 @@ class HandHandler {
             if (this.physicsBody) {
                 this.view.proteins[0].physicsWorld.removeBody(this.physicsBody);
                 this.physicsBody = undefined;
-                this.springForce = undefined;
+                this.springForces = [];
             }
         });
 
@@ -125,16 +128,17 @@ class HandHandler {
 
 function collideObject(indexTip, proteins) {
     const tmpVector1 = new THREE.Vector3();
+    const nearby = [];
     for (const protein of proteins) {
         for (const aaGroup of protein.aaGroups) {
             const distance = indexTip.getWorldPosition(tmpVector1).distanceTo(aaGroup.physicsBody.position);
-            if (distance < aaGroup.physicsShape.boundingSphereRadius * 2) {
-                return aaGroup.physicsBody;
+            if (distance < aaGroup.physicsShape.boundingSphereRadius * 10) {
+                nearby.push(aaGroup.physicsBody);
             }
         }
     }
 
-    return null;
+    return nearby;
 }
 
 export {HandHandler, populateHand}
