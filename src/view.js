@@ -82,6 +82,7 @@ class SphereView extends View {
         );
         mesh.castShadow = true;
         mesh.receiveShadow = true;
+        mesh.frustumCulled = false;
 
         const matrix = new THREE.Matrix4();
 
@@ -150,6 +151,7 @@ class AtomSphereView extends View {
         );
         mesh.castShadow = true;
         mesh.receiveShadow = true;
+        mesh.frustumCulled = false;
 
         this.tempM = new THREE.Matrix4();
 

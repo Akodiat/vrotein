@@ -113,7 +113,7 @@ class HandHandler {
 
     update() {
         const mc = this.handModel.motionController;
-        if (!mc || !mc.physicalBones ) {
+        if (!mc || !mc.physicalBones) {
             return;
         }
         for (let i=0; i<mc.physicalBones.length; i++) {
