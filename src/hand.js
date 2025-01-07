@@ -14,8 +14,7 @@ function populateHand(model, scene, world) {
     for (const bone of model.bones) {
         const mesh = new THREE.Mesh(sphereGeometry, material);
         mesh.position.copy(bone.position);
-        scene.add(mesh);
-
+        //scene.add(mesh);
 
         const shape = new CANNON.Sphere(radius);
         const body = new CANNON.Body({
