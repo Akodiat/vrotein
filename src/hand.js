@@ -131,7 +131,7 @@ function collideObject(indexTip, proteins) {
     for (const protein of proteins) {
         for (const aaGroup of protein.aaGroups) {
             const distance = indexTip.getWorldPosition(tmpVector1).distanceTo(aaGroup.physicsBody.position);
-            if (distance < aaGroup.physicsShape.boundingSphereRadius * 10) {
+            if (distance < protein.AAPhysicsShape.boundingSphereRadius * 10) {
                 nearby.push(aaGroup.physicsBody);
             }
         }
