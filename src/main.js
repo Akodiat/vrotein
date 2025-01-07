@@ -73,8 +73,8 @@ function init() {
     const handModelFactory = new XRHandModelFactory(
         null, model=>populateHand(model, scene, world)
     );
-    handHandlers.push(new HandHandler(0, renderer, handModelFactory, controllerModelFactory, scene, world));
-    handHandlers.push(new HandHandler(1, renderer, handModelFactory, controllerModelFactory, scene, world));
+    handHandlers.push(new HandHandler(0, renderer, handModelFactory, controllerModelFactory, scene));
+    handHandlers.push(new HandHandler(1, renderer, handModelFactory, controllerModelFactory, scene));
 
     // Lights
 
@@ -134,6 +134,7 @@ function init() {
             world.bodies.forEach(b=>world.removeBody(b));
             scene.remove(view.container);
             view = new view.constructor(scene, scale);
+            handHandlers.forEach(h=>h.view = view);
         },
         pdbId: "8p1a",
         physicsResolution: 2,
@@ -179,6 +180,7 @@ function init() {
         scene.remove(oldView.container);
         view = new viewType(scene, scale);
         view.copy(oldView);
+        handHandlers.forEach(h => h.view = view);
 	});
 
     gui.add(guiParams, "pdbId").name("PDB ID");
@@ -208,6 +210,7 @@ function init() {
     );
     protein.init(()=>{
         view.addProtein(protein);
+        handHandlers.forEach(h => h.view = view);
     });
 }
 
