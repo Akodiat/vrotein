@@ -41,8 +41,9 @@ class AminoAcid {
 }
 
 class AAGroup {
-    constructor(aaData, strandId, scale, proteinPos, physicsWorld, physicsMass=1
+    constructor(aaData, strandId, scale, proteinPos, physicsWorld, physicsShape
     ) {
+        const physicsMass = 1;
         this.strandId = strandId;
         this.aminoAcids = [];
 
@@ -64,13 +65,11 @@ class AAGroup {
         this.quaternion = new THREE.Quaternion();
 
         // Add to physics world
-        this.physicsShape = new CANNON.Sphere(
-            0.2 * scale // * aaData.length
-        );
+
         this.physicsBody = new CANNON.Body({
             mass: aaData.length * physicsMass,
         });
-        this.physicsBody.addShape(this.physicsShape);
+        this.physicsBody.addShape(physicsShape);
         this.physicsBody.position.copy(this.position);
         physicsWorld.addBody(this.physicsBody);
     }
@@ -100,6 +99,11 @@ class Protein {
         this.scale = scale;
         this.position = position;
         this.physicsResolution = physicsResolution;
+
+        // Create only one shape instance to save memory
+        this.AAPhysicsShape = new CANNON.Sphere(
+            0.2 * scale // * aaData.length
+        );
     }
     init(callback) {
         loadPDBFromId(this.id).then(systems=>{
@@ -115,7 +119,7 @@ class Protein {
                     if (i % this.physicsResolution === 0) {
                         const aaGroup = new AAGroup(
                             elements, chain.id, this.scale, this.position,
-                            this.physicsWorld
+                            this.physicsWorld, this.AAPhysicsShape
                         );
                         this.aaGroups.push(aaGroup);
                         strand.push(aaGroup);
