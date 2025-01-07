@@ -32,6 +32,8 @@ class View {
         this.scale = scale;
         this.container = new THREE.Group();
 
+        this.maxDist = 5;
+
         scene.add(this.container);
         this.proteins = [];
     }
@@ -103,10 +105,18 @@ class SphereView extends View {
         const tempM = new THREE.Matrix4();
         const tempV = new THREE.Vector3();
         for (const protein of this.proteins) {
+            if (protein.resetting) {
+                continue;
+            }
             const mesh = this.instancedMeshes.get(protein);
             let i=0;
+            let outOfBounds = false;
             for (const g of protein.aaGroups) {
                 g.update();
+                if (e.position.length() > this.maxDist) {
+                    outOfBounds = true;
+                    break;
+                }
                 for (const e of g.aminoAcids) {
                     tempV.copy(e.position);
                     tempV.applyQuaternion(g.quaternion);
@@ -117,6 +127,9 @@ class SphereView extends View {
                     i++;
                 }
                 g.diffuse();
+            }
+            if (outOfBounds) {
+                protein.reset();
             }
             mesh.instanceMatrix.needsUpdate = true;
         }
@@ -177,10 +190,18 @@ class AtomSphereView extends View {
     update() {
         this.tempM = new THREE.Matrix4();
         for (const protein of this.proteins) {
+            if (protein.resetting) {
+                continue;
+            }
             const mesh = this.instancedMeshes.get(protein);
             let i = 0;
+            let outOfBounds = false;
             for (const g of protein.aaGroups) {
                 g.update();
+                if (g.position.length() > this.maxDist) {
+                    outOfBounds = true;
+                    break;
+                }
                 for (const e of g.aminoAcids) {
                     for (const atom of e.atoms) {
                         this.tempV.copy(atom.position);
@@ -192,7 +213,13 @@ class AtomSphereView extends View {
                         i++;
                     }
                 }
+                if (outOfBounds) {
+                    break;
+                }
                 g.diffuse();
+            }
+            if (outOfBounds) {
+                protein.reset();
             }
             mesh.instanceMatrix.needsUpdate = true;
         }
@@ -310,10 +337,18 @@ class LineView extends View {
     update() {
         const tempV = new THREE.Vector3();
         for (const protein of this.proteins) {
+            if (protein.resetting) {
+                continue;
+            }
+            let outOfBounds = false;
             for (const strand of protein.strands) {
                 const positions = [];
                 for (const g of strand) {
                     g.update();
+                    if (g.position.length() > this.maxDist) {
+                        outOfBounds = true;
+                        break;
+                    }
                     for (const e of g.aminoAcids) {
                         tempV.copy(e.position);
                         tempV.applyQuaternion(g.quaternion);
@@ -327,6 +362,9 @@ class LineView extends View {
                 const line = this.lines.get(strand);
                 line.geometry.setPositions(positions);
                 line.needsUpdate = true;
+            }
+            if (outOfBounds) {
+                protein.reset();
             }
         }
     }
@@ -412,17 +450,28 @@ class SplineView extends View {
     update() {
         const point = new THREE.Vector3();
         for (const protein of this.proteins) {
+            if (protein.resetting) {
+                continue;
+            }
+            let outOfBounds = false;
             for (const strand of protein.strands) {
                 const points = [];
                 for (const g of strand) {
                     g.update();
+                    if (g.position.length() > this.maxDist) {
+                        outOfBounds = true;
+                        break;
+                    }
                     for (const e of g.aminoAcids) {
                         const p = e.position.clone();
                         p.applyQuaternion(g.quaternion);
                         p.add(g.position);
                         points.push(p);
+                        g.diffuse();
                     }
-                    g.diffuse();
+                }
+                if (outOfBounds) {
+                    break;
                 }
                 const spline = new THREE.CatmullRomCurve3(points);
                 const divisions = Math.round(12 * points.length);
@@ -436,6 +485,9 @@ class SplineView extends View {
                 const line = this.lines.get(strand);
                 line.geometry.setPositions(positions);
                 line.needsUpdate = true;
+            }
+            if (outOfBounds) {
+                protein.reset();
             }
         }
     }

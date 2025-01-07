@@ -134,6 +134,12 @@ class Protein {
         });
     }
 
+    reset() {
+        this.aaGroups.forEach(g=>this.physicsWorld.removeBody(g.physicsBody));
+        this.resetting = true;
+        this.init(()=>{this.resetting = false});
+    }
+
     getResidueCount() {
         let sum = 0;
         this.aaGroups.forEach(g => sum += g.aminoAcids.length);
