@@ -113,7 +113,7 @@ class SphereView extends View {
             let outOfBounds = false;
             for (const g of protein.aaGroups) {
                 g.update();
-                if (e.position.length() > this.maxDist) {
+                if (g.position.length() > this.maxDist) {
                     outOfBounds = true;
                     break;
                 }
