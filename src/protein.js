@@ -168,7 +168,7 @@ class Protein {
                     continue;
                 }
                 const dist = e1.position.distanceTo(e2.position);
-                if (dist > 2 * this.scale) {
+                if (dist > 3 * this.scale) {
                     continue;
                 }
                 const spring = new CANNON.Spring(
@@ -178,7 +178,7 @@ class Protein {
                         localAnchorA: new CANNON.Vec3(0, 0, 0),
                         localAnchorB: new CANNON.Vec3(0, 0, 0),
                         restLength: dist,
-                        stiffness: 30 * this.scale,
+                        stiffness: 100 * this.scale,
                         damping: 0.0
                     }
                 );
